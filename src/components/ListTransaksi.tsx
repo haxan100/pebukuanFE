@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Edit3, Check, X, Loader2 } from 'lucide-react';
+import { Search, Edit3, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import $ from 'jquery';
 
 interface TransaksiItem {
@@ -7,6 +7,18 @@ interface TransaksiItem {
   hp: string;
   harga_beli: number;
   harga_jual?: number;
+}
+
+interface BelumLakuItem {
+  id: string;
+  no: string | null;
+  hp: string;
+  grade: string;
+  imei: string;
+  harga_beli: string;
+  harga_jual: string | null;
+  status: string;
+  transaksi_id: string;
 }
 
 interface ListTransaksiProps {
@@ -17,10 +29,13 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [transaksiList, setTransaksiList] = useState<TransaksiItem[]>([]);
+  const [belumLakuList, setBelumLakuList] = useState<BelumLakuItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingBelumLaku, setLoadingBelumLaku] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [updating, setUpdating] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'transaksi' | 'belum-laku'>('transaksi');
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -84,6 +99,51 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
     });
   };
 
+  const fetchBelumLaku = () => {
+    setLoadingBelumLaku(true);
+    
+    const formData = new FormData();
+    formData.append('bulan', selectedMonth.toString());
+    formData.append('tahun', selectedYear.toString());
+    
+    $.ajax({
+      url: 'http://31.25.235.140/pembukuan/Api/listBelumLaku',
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      crossDomain: true,
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: false
+      },
+      success: (response) => {
+        console.log(response);
+        setBelumLakuList(response.data || []);
+        showNotification('Data HP belum laku berhasil dimuat');
+      },
+      error: (xhr, status, error) => {
+        console.error('Error fetching belum laku:', xhr.status, xhr.responseText, error);
+        let errorMessage = 'Gagal memuat data HP belum laku';
+        
+        if (xhr.status === 0) {
+          errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+        } else if (xhr.status === 404) {
+          errorMessage = 'Endpoint API tidak ditemukan.';
+        } else if (xhr.status === 500) {
+          errorMessage = 'Terjadi kesalahan pada server.';
+        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        }
+        
+        showNotification(errorMessage, 'error');
+      },
+      complete: () => {
+        setLoadingBelumLaku(false);
+      }
+    });
+  };
+
   const handleEdit = (item: TransaksiItem) => {
     setEditingId(item.id);
     setEditValue(item.harga_jual?.toString() || '');
@@ -138,7 +198,6 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       }
     });
   };
-  
 
   const handleCancel = () => {
     setEditingId(null);
@@ -160,6 +219,30 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
           <Search className="mr-2" size={20} />
           List Transaksi
         </h1>
+
+        {/* Toggle View */}
+        <div className="flex mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            onClick={() => setActiveView('transaksi')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeView === 'transaksi'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+            }`}
+          >
+            Semua Transaksi
+          </button>
+          <button
+            onClick={() => setActiveView('belum-laku')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeView === 'belum-laku'
+                ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400'
+            }`}
+          >
+            HP Belum Laku
+          </button>
+        </div>
         
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
@@ -190,22 +273,39 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
         </div>
         
         <button
-          onClick={fetchTransaksi}
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          onClick={activeView === 'transaksi' ? fetchTransaksi : fetchBelumLaku}
+          disabled={activeView === 'transaksi' ? loading : loadingBelumLaku}
+          className={`w-full py-2 px-4 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
+            activeView === 'transaksi' 
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-orange-600 text-white hover:bg-orange-700'
+          }`}
         >
-          {loading ? (
+          {(activeView === 'transaksi' ? loading : loadingBelumLaku) ? (
             <>
               <Loader2 className="animate-spin mr-2" size={16} />
               Memuat...
             </>
           ) : (
-            'Tampilkan'
+            <>
+              {activeView === 'transaksi' ? (
+                <>
+                  <Search className="mr-2" size={16} />
+                  Tampilkan Transaksi
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="mr-2" size={16} />
+                  Tampilkan HP Belum Laku
+                </>
+              )}
+            </>
           )}
         </button>
       </div>
 
-      {transaksiList.length > 0 && (
+      {/* Transaksi List */}
+      {activeView === 'transaksi' && transaksiList.length > 0 && (
         <div className="space-y-3">
           {transaksiList.map((item) => (
             <div
@@ -280,9 +380,67 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
         </div>
       )}
 
-      {transaksiList.length === 0 && !loading && (
+      {/* Belum Laku List */}
+      {activeView === 'belum-laku' && belumLakuList.length > 0 && (
+        <div className="space-y-3">
+          <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+            <div className="flex items-center">
+              <AlertCircle className="text-orange-600 dark:text-orange-400 mr-2" size={20} />
+              <div>
+                <h3 className="font-semibold text-orange-800 dark:text-orange-300">
+                  HP Belum Laku ({belumLakuList.length} unit)
+                </h3>
+                <p className="text-sm text-orange-700 dark:text-orange-400">
+                  Daftar HP yang belum terjual pada periode ini
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {belumLakuList.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-orange-500"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-800 dark:text-white">{item.hp}</h3>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Grade:</span> {item.grade}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">IMEI:</span> {item.imei}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Harga Beli:</span> {formatCurrency(parseInt(item.harga_beli))}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                    Belum Laku
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty States */}
+      {activeView === 'transaksi' && transaksiList.length === 0 && !loading && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <Search className="mx-auto text-gray-400 mb-4" size={48} />
           <p className="text-gray-500 dark:text-gray-400">Tidak ada data transaksi untuk periode yang dipilih</p>
+        </div>
+      )}
+
+      {activeView === 'belum-laku' && belumLakuList.length === 0 && !loadingBelumLaku && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <AlertCircle className="mx-auto text-green-400 mb-4" size={48} />
+          <p className="text-green-600 dark:text-green-400 font-medium">Semua HP sudah laku!</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Tidak ada HP yang belum terjual pada periode ini</p>
         </div>
       )}
     </div>
