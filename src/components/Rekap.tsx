@@ -40,6 +40,153 @@ interface RekapProps {
   showNotification: (message: string, type?: 'success' | 'error') => void;
 }
 
+const YearlyChart: React.FC<{ data: RekapTahunanItem[] }> = ({ data }) => {
+  const maxProfit = Math.max(...data.map(item => item.laba_bersih));
+  const minProfit = Math.min(...data.map(item => item.laba_bersih));
+  const range = maxProfit - minProfit || 1;
+  
+  const chartWidth = 320;
+  const chartHeight = 200;
+  const padding = 40;
+  
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  
+  const points = data.map((item, index) => {
+    const x = padding + (index * (chartWidth - 2 * padding)) / 11;
+    const y = chartHeight - padding - ((item.laba_bersih - minProfit) / range) * (chartHeight - 2 * padding);
+    return { x, y, value: item.laba_bersih, month: months[index] };
+  });
+  
+  const pathData = points.map((point, index) => 
+    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+  ).join(' ');
+  
+  const areaPathData = `M ${points[0].x} ${chartHeight - padding} L ${pathData.substring(2)} L ${points[points.length - 1].x} ${chartHeight - padding} Z`;
+  
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
+        <TrendingUp className="mr-2" size={20} />
+        Grafik Laba Bersih Tahunan
+      </h3>
+      
+      <div className="overflow-x-auto">
+        <svg width={chartWidth} height={chartHeight} className="mx-auto">
+          {/* Grid lines */}
+          <defs>
+            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
+          
+          {/* Horizontal grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+            const y = chartHeight - padding - ratio * (chartHeight - 2 * padding);
+            const value = minProfit + ratio * range;
+            return (
+              <g key={index}>
+                <line
+                  x1={padding}
+                  y1={y}
+                  x2={chartWidth - padding}
+                  y2={y}
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  className="text-gray-200 dark:text-gray-600"
+                  strokeDasharray="2,2"
+                />
+                <text
+                  x={padding - 5}
+                  y={y + 4}
+                  textAnchor="end"
+                  className="text-xs fill-gray-500 dark:fill-gray-400"
+                >
+                  {value >= 1000000 ? `${(value / 1000000).toFixed(1)}M` : 
+                   value >= 1000 ? `${(value / 1000).toFixed(0)}K` : 
+                   value.toFixed(0)}
+                </text>
+              </g>
+            );
+          })}
+          
+          {/* Area fill */}
+          <path
+            d={areaPathData}
+            fill="url(#areaGradient)"
+          />
+          
+          {/* Main line */}
+          <path
+            d={pathData}
+            fill="none"
+            stroke="rgb(59, 130, 246)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          
+          {/* Data points */}
+          {points.map((point, index) => (
+            <g key={index}>
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r="4"
+                fill="rgb(59, 130, 246)"
+                stroke="white"
+                strokeWidth="2"
+                className="hover:r-6 transition-all cursor-pointer"
+              />
+              
+              {/* Month labels */}
+              <text
+                x={point.x}
+                y={chartHeight - padding + 15}
+                textAnchor="middle"
+                className="text-xs fill-gray-600 dark:fill-gray-400"
+              >
+                {point.month}
+              </text>
+              
+              {/* Hover tooltip */}
+              <g className="opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                <rect
+                  x={point.x - 30}
+                  y={point.y - 35}
+                  width="60"
+                  height="25"
+                  rx="4"
+                  fill="rgb(31, 41, 55)"
+                  className="dark:fill-gray-700"
+                />
+                <text
+                  x={point.x}
+                  y={point.y - 18}
+                  textAnchor="middle"
+                  className="text-xs fill-white"
+                >
+                  {point.value >= 1000000 ? `${(point.value / 1000000).toFixed(1)}M` : 
+                   point.value >= 1000 ? `${(point.value / 1000).toFixed(0)}K` : 
+                   point.value.toLocaleString()}
+                </text>
+              </g>
+            </g>
+          ))}
+        </svg>
+      </div>
+      
+      {/* Chart legend */}
+      <div className="flex justify-center mt-4">
+        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+          <span>Laba Bersih (Rupiah)</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
@@ -301,6 +448,9 @@ const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
               }).format(totalLabaTahunan)}
             </p>
           </div>
+
+          {/* Yearly Chart */}
+          <YearlyChart data={rekapTahunan} />
 
           <div className="grid grid-cols-1 gap-3">
             {rekapTahunan.map((item) => (
