@@ -166,15 +166,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, showNotification }) => {
             </p>
           </div>
         </div>
-
-        {/* Demo Credentials Info */}
-        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-          <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Informasi Login</h3>
-          <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-            <p><strong>Username:</strong> hasan</p>
-            <p><strong>Password:</strong> Duniahasan2012s*</p>
-          </div>
-        </div>
       </div>
     </div>
   );
