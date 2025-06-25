@@ -149,6 +149,11 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
     setEditValue(item.harga_jual?.toString() || '');
   };
 
+  const handleEditBelumLaku = (item: BelumLakuItem) => {
+    setEditingId(item.id);
+    setEditValue(item.harga_jual || '');
+  };
+
   const handleSave = (id: string) => {
     const hargaJual = parseInt(editValue);
   
@@ -167,15 +172,22 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       url: 'http://31.25.235.140/pembukuan/Api/jual',
       method: 'POST',
       data: formData,
-      processData: false,         // Jangan ubah jadi query string
-      contentType: false,         // Otomatis set multipart/form-data
-      dataType: 'json',           // Expecting JSON response
+      processData: false,
+      contentType: false,
+      dataType: 'json',
       success: (response) => {
-        setTransaksiList(prev =>
-          prev.map(item =>
-            item.id === id ? { ...item, harga_jual: hargaJual } : item
-          )
-        );
+        // Update transaksi list if in transaksi view
+        if (activeView === 'transaksi') {
+          setTransaksiList(prev =>
+            prev.map(item =>
+              item.id === id ? { ...item, harga_jual: hargaJual } : item
+            )
+          );
+        } else {
+          // Update belum laku list and remove the item since it's now sold
+          setBelumLakuList(prev => prev.filter(item => item.id !== id));
+        }
+        
         setEditingId(null);
         setEditValue('');
         showNotification('Harga jual berhasil diupdate');
@@ -422,6 +434,51 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
                     Belum Laku
                   </span>
                 </div>
+              </div>
+
+              {/* Edit Price Section for Belum Laku */}
+              <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-600">
+                {editingId === item.id ? (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Masukkan harga jual"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => handleSave(item.id)}
+                      disabled={updating === item.id}
+                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center"
+                    >
+                      {updating === item.id ? (
+                        <Loader2 className="animate-spin" size={16} />
+                      ) : (
+                        <Check size={16} />
+                      )}
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Klik untuk menambahkan harga jual
+                    </span>
+                    <button
+                      onClick={() => handleEditBelumLaku(item)}
+                      className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center text-sm"
+                    >
+                      <Edit3 size={14} className="mr-1" />
+                      Jual
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
