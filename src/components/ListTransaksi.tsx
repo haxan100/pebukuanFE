@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Edit3, Check, X, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Edit3, Check, X, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import $ from 'jquery';
 
 interface TransaksiItem {
@@ -36,6 +36,11 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
   const [editValue, setEditValue] = useState<string>('');
   const [updating, setUpdating] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'transaksi' | 'belum-laku'>('transaksi');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -54,8 +59,32 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
     { value: 12, label: 'Desember' },
   ];
 
+  // Filter and pagination logic
+  const getFilteredData = () => {
+    const data = activeView === 'transaksi' ? transaksiList : belumLakuList;
+    if (!searchTerm) return data;
+    
+    return data.filter(item => 
+      item.hp.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (activeView === 'belum-laku' && (item as BelumLakuItem).imei.includes(searchTerm))
+    );
+  };
+
+  const filteredData = getFilteredData();
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  // Reset pagination when switching views or searching
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeView, searchTerm]);
+
   const fetchTransaksi = () => {
     setLoading(true);
+    setCurrentPage(1);
+    setSearchTerm('');
     
     const formData = new FormData();
     formData.append('bulan', selectedMonth.toString());
@@ -75,7 +104,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       success: (response) => {
         console.log(response);
         setTransaksiList(response.data || []);
-        showNotification('Data transaksi berhasil dimuat');
+        showNotification(`Data transaksi berhasil dimuat (${response.data?.length || 0} item)`);
       },
       error: (xhr, status, error) => {
         console.error('Error fetching transaksi:', xhr.status, xhr.responseText, error);
@@ -101,6 +130,8 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
 
   const fetchBelumLaku = () => {
     setLoadingBelumLaku(true);
+    setCurrentPage(1);
+    setSearchTerm('');
     
     const formData = new FormData();
     formData.append('bulan', selectedMonth.toString());
@@ -120,7 +151,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       success: (response) => {
         console.log(response);
         setBelumLakuList(response.data || []);
-        showNotification('Data HP belum laku berhasil dimuat');
+        showNotification(`Data HP belum laku berhasil dimuat (${response.data?.length || 0} item)`);
       },
       error: (xhr, status, error) => {
         console.error('Error fetching belum laku:', xhr.status, xhr.responseText, error);
@@ -224,6 +255,95 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
     }).format(amount);
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mt-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredData.length)} dari {filteredData.length} data
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            {startPage > 1 && (
+              <>
+                <button
+                  onClick={() => handlePageChange(1)}
+                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
+                >
+                  1
+                </button>
+                {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
+              </>
+            )}
+            
+            {pages.map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-2 rounded-lg text-sm ${
+                  currentPage === page
+                    ? 'bg-blue-600 text-white'
+                    : 'border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            
+            {endPage < totalPages && (
+              <>
+                {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
@@ -316,10 +436,31 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
         </button>
       </div>
 
+      {/* Search Bar */}
+      {(transaksiList.length > 0 || belumLakuList.length > 0) && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder={`Cari ${activeView === 'transaksi' ? 'nama HP' : 'nama HP atau IMEI'}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          {filteredData.length > 0 && (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              {searchTerm ? `Ditemukan ${filteredData.length} hasil` : `Total ${filteredData.length} data`}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Transaksi List */}
-      {activeView === 'transaksi' && transaksiList.length > 0 && (
+      {activeView === 'transaksi' && currentData.length > 0 && (
         <div className="space-y-3">
-          {transaksiList.map((item) => (
+          {currentData.map((item) => (
             <div
                 key={item.id}
                 className={`rounded-lg shadow-sm p-4 border ${
@@ -393,14 +534,14 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       )}
 
       {/* Belum Laku List */}
-      {activeView === 'belum-laku' && belumLakuList.length > 0 && (
+      {activeView === 'belum-laku' && currentData.length > 0 && (
         <div className="space-y-3">
           <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
             <div className="flex items-center">
               <AlertCircle className="text-orange-600 dark:text-orange-400 mr-2" size={20} />
               <div>
                 <h3 className="font-semibold text-orange-800 dark:text-orange-300">
-                  HP Belum Laku ({belumLakuList.length} unit)
+                  HP Belum Laku ({filteredData.length} unit)
                 </h3>
                 <p className="text-sm text-orange-700 dark:text-orange-400">
                   Daftar HP yang belum terjual pada periode ini
@@ -409,7 +550,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
             </div>
           </div>
 
-          {belumLakuList.map((item) => (
+          {currentData.map((item) => (
             <div
               key={item.id}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-orange-500"
@@ -419,13 +560,13 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
                   <h3 className="font-semibold text-gray-800 dark:text-white">{item.hp}</h3>
                   <div className="mt-2 space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Grade:</span> {item.grade}
+                      <span className="font-medium">Grade:</span> {(item as BelumLakuItem).grade}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">IMEI:</span> {item.imei}
+                      <span className="font-medium">IMEI:</span> {(item as BelumLakuItem).imei}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Harga Beli:</span> {formatCurrency(parseInt(item.harga_beli))}
+                      <span className="font-medium">Harga Beli:</span> {formatCurrency(parseInt((item as BelumLakuItem).harga_beli))}
                     </p>
                   </div>
                 </div>
@@ -471,7 +612,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
                       Klik untuk menambahkan harga jual
                     </span>
                     <button
-                      onClick={() => handleEditBelumLaku(item)}
+                      onClick={() => handleEditBelumLaku(item as BelumLakuItem)}
                       className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center text-sm"
                     >
                       <Edit3 size={14} className="mr-1" />
@@ -484,6 +625,9 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
           ))}
         </div>
       )}
+
+      {/* Pagination */}
+      {renderPagination()}
 
       {/* Empty States */}
       {activeView === 'transaksi' && transaksiList.length === 0 && !loading && (
@@ -498,6 +642,20 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
           <AlertCircle className="mx-auto text-green-400 mb-4" size={48} />
           <p className="text-green-600 dark:text-green-400 font-medium">Semua HP sudah laku!</p>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Tidak ada HP yang belum terjual pada periode ini</p>
+        </div>
+      )}
+
+      {/* No Search Results */}
+      {searchTerm && filteredData.length === 0 && (transaksiList.length > 0 || belumLakuList.length > 0) && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <Search className="mx-auto text-gray-400 mb-4" size={48} />
+          <p className="text-gray-500 dark:text-gray-400">Tidak ditemukan hasil untuk "{searchTerm}"</p>
+          <button
+            onClick={() => setSearchTerm('')}
+            className="mt-2 text-blue-600 dark:text-blue-400 hover:underline text-sm"
+          >
+            Hapus pencarian
+          </button>
         </div>
       )}
     </div>

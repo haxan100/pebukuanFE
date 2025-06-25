@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, DollarSign, BarChart3, Upload, Loader2, Sun, Moon, LogOut, User } from 'lucide-react';
+import { Receipt, DollarSign, BarChart3, Upload, Loader2, Sun, Moon, LogOut } from 'lucide-react';
 import ListTransaksi from './components/ListTransaksi';
 import Pengeluaran from './components/Pengeluaran';
 import Rekap from './components/Rekap';
@@ -106,12 +106,7 @@ function App() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 transition-colors duration-200">
       {/* Header with Theme Toggle and Logout */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="flex justify-between items-center px-4 py-3">
-          <div className="flex items-center">
-            <User className="text-blue-600 dark:text-blue-400 mr-2" size={20} />
-            <span className="font-medium text-gray-800 dark:text-white">Hasan</span>
-          </div>
-          
+        <div className="flex justify-end items-center px-4 py-3">
           <div className="flex items-center space-x-2">
             <button
               onClick={toggleDarkMode}
