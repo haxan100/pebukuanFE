@@ -46,14 +46,17 @@ const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
 
   const fetchRekap = () => {
     setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('bulan', selectedMonth.toString());
+    formData.append('tahun', selectedYear.toString());
+    
     $.ajax({
       url: 'http://31.25.235.140/pembukuan/Api/rekap_tahunan',
       method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        bulan: selectedMonth,
-        tahun: selectedYear
-      }),
+      data: formData,
+      processData: false,
+      contentType: false,
       crossDomain: true,
       xhrFields: {
         withCredentials: false

@@ -47,14 +47,17 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
 
   const fetchPengeluaran = () => {
     setLoading(true);
+    
+    const formDataRequest = new FormData();
+    formDataRequest.append('bulan', selectedMonth.toString());
+    formDataRequest.append('tahun', selectedYear.toString());
+    
     $.ajax({
       url: 'http://31.25.235.140/pembukuan/Api/pengeluaran',
       method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        bulan: selectedMonth,
-        tahun: selectedYear
-      }),
+      data: formDataRequest,
+      processData: false,
+      contentType: false,
       crossDomain: true,
       xhrFields: {
         withCredentials: false
@@ -100,16 +103,19 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
     }
 
     setSaving(true);
+    
+    const formDataRequest = new FormData();
+    formDataRequest.append('nama_pengeluaran', formData.nama_pengeluaran);
+    formDataRequest.append('jumlah', jumlah.toString());
+    formDataRequest.append('bulan', formData.bulan.toString());
+    formDataRequest.append('tahun', formData.tahun.toString());
+    
     $.ajax({
       url: 'http://31.25.235.140/pembukuan/Api/tambah_pengeluaran',
       method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        nama_pengeluaran: formData.nama_pengeluaran,
-        jumlah: jumlah,
-        bulan: formData.bulan,
-        tahun: formData.tahun
-      }),
+      data: formDataRequest,
+      processData: false,
+      contentType: false,
       crossDomain: true,
       xhrFields: {
         withCredentials: false
