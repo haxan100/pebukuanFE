@@ -155,19 +155,19 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <h1 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center">
           <Search className="mr-2" size={20} />
           List Transaksi
         </h1>
         
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tahun</label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               {years.map(year => (
                 <option key={year} value={year}>{year}</option>
@@ -176,11 +176,11 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bulan</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bulan</label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               {months.map(month => (
                 <option key={month.value} value={month.value}>{month.label}</option>
@@ -212,14 +212,14 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
                 key={item.id}
                 className={`rounded-lg shadow-sm p-4 border ${
                   item.harga_jual
-                    ? 'bg-white border-gray-100'
-                    : 'bg-gray-100 border-gray-300 text-gray-500'
+                    ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
                 }`}
               >              
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{item.hp}</h3>
-                  <p className="text-sm text-gray-600">Harga Beli: {formatCurrency(item.harga_beli)}</p>
+                  <h3 className="font-semibold text-gray-800 dark:text-white">{item.hp}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Harga Beli: {formatCurrency(item.harga_beli)}</p>
                 </div>
               </div>
               
@@ -232,7 +232,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         placeholder="Harga jual"
-                        className="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                       <button
                         onClick={() => handleSave(item.id)}
@@ -254,7 +254,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
                         Harga Jual: {item.harga_jual ? formatCurrency(item.harga_jual) : 'Belum diisi'}
                       </span>
                       <button
@@ -269,8 +269,8 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
               </div>
               
               {item.harga_jual && (
-                <div className="mt-2 pt-2 border-t border-gray-100">
-                  <p className="text-sm font-medium text-green-600">
+                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
                     Keuntungan: {formatCurrency(item.harga_jual - item.harga_beli)}
                   </p>
                 </div>
@@ -281,8 +281,8 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       )}
 
       {transaksiList.length === 0 && !loading && (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <p className="text-gray-500">Tidak ada data transaksi untuk periode yang dipilih</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Tidak ada data transaksi untuk periode yang dipilih</p>
         </div>
       )}
     </div>

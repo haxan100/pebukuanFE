@@ -170,19 +170,19 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
   
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <h1 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center">
           <DollarSign className="mr-2" size={20} />
           Pengeluaran
         </h1>
         
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tahun</label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               {years.map(year => (
                 <option key={year} value={year}>{year}</option>
@@ -191,11 +191,11 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bulan</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bulan</label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               {months.map(month => (
                 <option key={month.value} value={month.value}>{month.label}</option>
@@ -234,39 +234,39 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Tambah Pengeluaran</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Tambah Pengeluaran</h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nama Pengeluaran</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nama Pengeluaran</label>
               <input
                 type="text"
                 value={formData.nama_pengeluaran}
                 onChange={(e) => setFormData({...formData, nama_pengeluaran: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Masukkan nama pengeluaran"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Jumlah</label>
               <input
                 type="number"
                 value={formData.nominal}
                 onChange={(e) => setFormData({...formData, nominal: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Masukkan jumlah"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bulan</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bulan</label>
                 <select
                   value={formData.bulan}
                   onChange={(e) => setFormData({...formData, bulan: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   {months.map(month => (
                     <option key={month.value} value={month.value}>{month.label}</option>
@@ -275,11 +275,11 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tahun</label>
                 <select
                   value={formData.tahun}
                   onChange={(e) => setFormData({...formData, tahun: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   {years.map(year => (
                     <option key={year} value={year}>{year}</option>
@@ -307,7 +307,7 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Batal
               </button>
@@ -318,20 +318,20 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
 
       {pengeluaranList.length > 0 && (
         <div className="space-y-3">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-800">Total Pengeluaran</h3>
-            <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalPengeluaran)}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-800 dark:text-blue-300">Total Pengeluaran</h3>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(totalPengeluaran)}</p>
           </div>
           
           {pengeluaranList.map((item) => (
-            <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{item.keterangan}</h3>
-                  <p className="text-sm text-gray-600">{item.created_at}</p>
+                  <h3 className="font-semibold text-gray-800 dark:text-white">{item.keterangan}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{item.created_at}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-red-600">{formatCurrency(item.nominal)}</p>
+                  <p className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(item.nominal)}</p>
                 </div>
               </div>
             </div>
@@ -340,8 +340,8 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
       )}
 
       {pengeluaranList.length === 0 && !loading && (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <p className="text-gray-500">Tidak ada data pengeluaran untuk periode yang dipilih</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Tidak ada data pengeluaran untuk periode yang dipilih</p>
         </div>
       )}
     </div>

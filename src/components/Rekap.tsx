@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Loader2, Calendar } from 'lucide-react';
 import $ from 'jquery';
 
 interface RekapSummary {
@@ -30,6 +30,12 @@ interface RekapData {
   tahun: number;
 }
 
+interface RekapTahunanItem {
+  bulan: number;
+  laba_bersih: number;
+  laba_bersih_rupiah: string;
+}
+
 interface RekapProps {
   showNotification: (message: string, type?: 'success' | 'error') => void;
 }
@@ -38,7 +44,10 @@ const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [rekapData, setRekapData] = useState<RekapData | null>(null);
+  const [rekapTahunan, setRekapTahunan] = useState<RekapTahunanItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingTahunan, setLoadingTahunan] = useState(false);
+  const [activeView, setActiveView] = useState<'bulanan' | 'tahunan'>('bulanan');
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -98,84 +107,244 @@ const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
     });
   };
 
+  const fetchRekapTahunan = () => {
+    setLoadingTahunan(true);
+    const formData = new FormData();
+    formData.append('tahun', selectedYear.toString());
+
+    $.ajax({
+      url: 'http://31.25.235.140/pembukuan/Api/rekap_tahunan',
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      crossDomain: true,
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: false
+      },
+      success: (response) => {
+        setRekapTahunan(response.data || []);
+        showNotification('Data rekap tahunan berhasil dimuat');
+      },
+      error: (xhr, status, error) => {
+        console.error('Error fetching rekap tahunan:', xhr.status, xhr.responseText, error);
+        let errorMessage = 'Gagal memuat data rekap tahunan';
+
+        if (xhr.status === 0) {
+          errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+        } else if (xhr.status === 404) {
+          errorMessage = 'Endpoint API tidak ditemukan.';
+        } else if (xhr.status === 500) {
+          errorMessage = 'Terjadi kesalahan pada server.';
+        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        }
+
+        showNotification(errorMessage, 'error');
+      },
+      complete: () => setLoadingTahunan(false)
+    });
+  };
+
+  const totalLabaTahunan = rekapTahunan.reduce((sum, item) => sum + item.laba_bersih, 0);
+
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <h1 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center">
           <BarChart3 className="mr-2" size={20} /> Rekap Keuangan
         </h1>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              {years.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Bulan</label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              {months.map(month => (
-                <option key={month.value} value={month.value}>{month.label}</option>
-              ))}
-            </select>
-          </div>
+        {/* Toggle View */}
+        <div className="flex mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            onClick={() => setActiveView('bulanan')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeView === 'bulanan'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+            }`}
+          >
+            Rekap Bulanan
+          </button>
+          <button
+            onClick={() => setActiveView('tahunan')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeView === 'tahunan'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+            }`}
+          >
+            Rekap Tahunan
+          </button>
         </div>
 
-        <button
-          onClick={fetchRekap}
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg flex justify-center items-center"
-        >
-          {loading ? (<><Loader2 className="animate-spin mr-2" size={16} /> Memuat...</>) : 'Lihat Rekap'}
-        </button>
+        {activeView === 'bulanan' ? (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tahun</label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bulan</label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {months.map(month => (
+                    <option key={month.value} value={month.value}>{month.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={fetchRekap}
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (<><Loader2 className="animate-spin mr-2" size={16} /> Memuat...</>) : 'Lihat Rekap Bulanan'}
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tahun</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={fetchRekapTahunan}
+              disabled={loadingTahunan}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingTahunan ? (<><Loader2 className="animate-spin mr-2" size={16} /> Memuat...</>) : (
+                <>
+                  <Calendar className="mr-2" size={16} />
+                  Lihat Rekap Tahunan
+                </>
+              )}
+            </button>
+          </>
+        )}
       </div>
 
-      {rekapData && (
+      {/* Rekap Bulanan */}
+      {activeView === 'bulanan' && rekapData && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
-              <p className="text-sm text-gray-600">Total Modal Awal</p>
-              <p className="text-xl font-bold text-gray-800">{rekapData.summary.modal_awal_rupiah}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-red-500">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Modal Awal</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-white">{rekapData.summary.modal_awal_rupiah}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-              <p className="text-sm text-gray-600">Total Penjualan</p>
-              <p className="text-xl font-bold text-gray-800">{rekapData.summary.total_penjualan_rupiah}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-green-500">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Penjualan</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-white">{rekapData.summary.total_penjualan_rupiah}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
-              <p className="text-sm text-gray-600">Total Beban</p>
-              <p className="text-xl font-bold text-gray-800">{rekapData.summary.total_beban_rupiah}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Beban</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-white">{rekapData.summary.total_beban_rupiah}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-              <p className="text-sm text-gray-600">Laba Bersih</p>
-              <p className="text-2xl font-bold text-green-700">{rekapData.summary.laba_bersih_rupiah}</p>
-              <p className="text-sm text-gray-600">{months.find(m => m.value === rekapData.bulan)?.label} {rekapData.tahun}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Laba Bersih</p>
+              <p className="text-2xl font-bold text-green-700 dark:text-green-400">{rekapData.summary.laba_bersih_rupiah}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{months.find(m => m.value === rekapData.bulan)?.label} {rekapData.tahun}</p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-400">
-              <p className="text-sm text-gray-600">Perbandingan dengan {months.find(m => m.value === rekapData.compare.bulanLalu)?.label} {rekapData.compare.tahunLalu}</p>
-              <p className="text-sm text-gray-800">Laba Bersih Sebelumnya: {rekapData.compare.prev_laba_bersih_rupiah}</p>
-              <p className="text-sm text-gray-800">Selisih: {rekapData.compare.selisih_rupiah} ({rekapData.compare.persen}%)</p>
-              <p className={`text-sm font-bold ${rekapData.compare.status_performa === 'naik' ? 'text-green-600' : 'text-red-600'}`}>
-                Status: {rekapData.compare.status_performa.toUpperCase()}
-              </p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Perbandingan dengan {months.find(m => m.value === rekapData.compare.bulanLalu)?.label} {rekapData.compare.tahunLalu}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-200">Laba Bersih Sebelumnya: {rekapData.compare.prev_laba_bersih_rupiah}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-200">Selisih: {rekapData.compare.selisih_rupiah} ({rekapData.compare.persen}%)</p>
+              <div className="flex items-center mt-2">
+                {rekapData.compare.status_performa === 'naik' ? (
+                  <TrendingUp className="text-green-600 mr-2" size={16} />
+                ) : (
+                  <TrendingDown className="text-red-600 mr-2" size={16} />
+                )}
+                <p className={`text-sm font-bold ${rekapData.compare.status_performa === 'naik' ? 'text-green-600' : 'text-red-600'}`}>
+                  Status: {rekapData.compare.status_performa.toUpperCase()}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {!rekapData && !loading && (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <p className="text-gray-500">Pilih periode untuk melihat rekap keuangan</p>
+      {/* Rekap Tahunan */}
+      {activeView === 'tahunan' && rekapTahunan.length > 0 && (
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-sm p-6 text-white">
+            <h3 className="text-lg font-semibold mb-2">Total Laba Bersih {selectedYear}</h3>
+            <p className="text-3xl font-bold">
+              {new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+              }).format(totalLabaTahunan)}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {rekapTahunan.map((item) => (
+              <div
+                key={item.bulan}
+                className={`rounded-lg shadow-sm p-4 border-l-4 ${
+                  item.laba_bersih > 0
+                    ? 'bg-white dark:bg-gray-800 border-green-500'
+                    : 'bg-gray-50 dark:bg-gray-700 border-gray-300'
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-gray-800 dark:text-white">
+                      {months.find(m => m.value === item.bulan)?.label}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Laba Bersih</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-lg font-bold ${
+                      item.laba_bersih > 0 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {item.laba_bersih_rupiah}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty States */}
+      {activeView === 'bulanan' && !rekapData && !loading && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Pilih periode untuk melihat rekap keuangan bulanan</p>
+        </div>
+      )}
+
+      {activeView === 'tahunan' && rekapTahunan.length === 0 && !loadingTahunan && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Pilih tahun untuk melihat rekap keuangan tahunan</p>
         </div>
       )}
     </div>
