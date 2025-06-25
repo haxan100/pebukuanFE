@@ -41,14 +41,17 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
 
   const fetchTransaksi = () => {
     setLoading(true);
+    
+    const formData = new FormData();
+    formData.append('bulan', selectedMonth.toString());
+    formData.append('tahun', selectedYear.toString());
+    
     $.ajax({
       url: 'http://31.25.235.140/pembukuan/Api/transaksi',
       method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        bulan: selectedMonth,
-        tahun: selectedYear
-      }),
+      data: formData,
+      processData: false,
+      contentType: false,
       crossDomain: true,
       xhrFields: {
         withCredentials: false
@@ -92,14 +95,17 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
     }
 
     setUpdating(id);
+    
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('harga_jual', hargaJual.toString());
+    
     $.ajax({
       url: 'http://31.25.235.140/pembukuan/Api/jual',
       method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        id: id,
-        harga_jual: hargaJual
-      }),
+      data: formData,
+      processData: false,
+      contentType: false,
       crossDomain: true,
       xhrFields: {
         withCredentials: false
