@@ -4,9 +4,9 @@ import $ from 'jquery';
 
 interface PengeluaranItem {
   id: string;
-  nama_pengeluaran: string;
-  jumlah: number;
-  tanggal: string;
+  keterangan: string;
+  nominal: number;
+  created_at: string;
 }
 
 interface PengeluaranProps {
@@ -23,7 +23,7 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
   
   const [formData, setFormData] = useState({
     nama_pengeluaran: '',
-    jumlah: '',
+    nominal: '',
     bulan: new Date().getMonth() + 1,
     tahun: new Date().getFullYear()
   });
@@ -59,6 +59,7 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
       processData: false,
       contentType: false,
       crossDomain: true,
+      dataType: 'json',
       xhrFields: {
         withCredentials: false
       },
@@ -91,13 +92,13 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nama_pengeluaran.trim() || !formData.jumlah) {
+    if (!formData.nama_pengeluaran.trim() || !formData.nominal) {
       showNotification('Semua field harus diisi', 'error');
       return;
     }
 
-    const jumlah = parseInt(formData.jumlah);
-    if (isNaN(jumlah) || jumlah <= 0) {
+    const nominal = parseInt(formData.nominal);
+    if (isNaN(nominal) || nominal <= 0) {
       showNotification('Jumlah harus berupa angka yang valid', 'error');
       return;
     }
@@ -105,13 +106,13 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
     setSaving(true);
     
     const formDataRequest = new FormData();
-    formDataRequest.append('nama_pengeluaran', formData.nama_pengeluaran);
-    formDataRequest.append('jumlah', jumlah.toString());
+    formDataRequest.append('keterangan', formData.nama_pengeluaran);
+    formDataRequest.append('nominal', nominal.toString());
     formDataRequest.append('bulan', formData.bulan.toString());
     formDataRequest.append('tahun', formData.tahun.toString());
     
     $.ajax({
-      url: 'http://31.25.235.140/pembukuan/Api/tambah_pengeluaran',
+      url: 'http://31.25.235.140/pembukuan/Api/tambahPengeluaran',
       method: 'POST',
       data: formDataRequest,
       processData: false,
@@ -124,7 +125,7 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
         showNotification('Pengeluaran berhasil ditambahkan');
         setFormData({
           nama_pengeluaran: '',
-          jumlah: '',
+          nominal: '',
           bulan: new Date().getMonth() + 1,
           tahun: new Date().getFullYear()
         });
@@ -165,8 +166,8 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
     }).format(amount);
   };
 
-  const totalPengeluaran = pengeluaranList.reduce((sum, item) => sum + item.jumlah, 0);
-
+  const totalPengeluaran = pengeluaranList.reduce((sum, item) => sum + item.nominal, 0);
+  
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-4">
@@ -252,8 +253,8 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
               <input
                 type="number"
-                value={formData.jumlah}
-                onChange={(e) => setFormData({...formData, jumlah: e.target.value})}
+                value={formData.nominal}
+                onChange={(e) => setFormData({...formData, nominal: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Masukkan jumlah"
               />
@@ -326,11 +327,11 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
             <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{item.nama_pengeluaran}</h3>
-                  <p className="text-sm text-gray-600">{item.tanggal}</p>
+                  <h3 className="font-semibold text-gray-800">{item.keterangan}</h3>
+                  <p className="text-sm text-gray-600">{item.created_at}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-red-600">{formatCurrency(item.jumlah)}</p>
+                  <p className="font-semibold text-red-600">{formatCurrency(item.nominal)}</p>
                 </div>
               </div>
             </div>

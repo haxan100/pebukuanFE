@@ -4,7 +4,7 @@ import $ from 'jquery';
 
 interface TransaksiItem {
   id: string;
-  nama_hp: string;
+  hp: string;
   harga_beli: number;
   harga_jual?: number;
 }
@@ -53,10 +53,12 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       processData: false,
       contentType: false,
       crossDomain: true,
+      dataType: 'json',
       xhrFields: {
         withCredentials: false
       },
       success: (response) => {
+        console.log(response);
         setTransaksiList(response.data || []);
         showNotification('Data transaksi berhasil dimuat');
       },
@@ -89,30 +91,28 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
 
   const handleSave = (id: string) => {
     const hargaJual = parseInt(editValue);
+  
     if (isNaN(hargaJual) || hargaJual <= 0) {
       showNotification('Harga jual harus berupa angka yang valid', 'error');
       return;
     }
-
+  
     setUpdating(id);
-    
+  
     const formData = new FormData();
-    formData.append('id', id);
-    formData.append('harga_jual', hargaJual.toString());
-    
+    formData.append('id_hp', id);
+    formData.append('harga', hargaJual.toString());
+  
     $.ajax({
       url: 'http://31.25.235.140/pembukuan/Api/jual',
       method: 'POST',
       data: formData,
-      processData: false,
-      contentType: false,
-      crossDomain: true,
-      xhrFields: {
-        withCredentials: false
-      },
+      processData: false,         // Jangan ubah jadi query string
+      contentType: false,         // Otomatis set multipart/form-data
+      dataType: 'json',           // Expecting JSON response
       success: (response) => {
-        setTransaksiList(prev => 
-          prev.map(item => 
+        setTransaksiList(prev =>
+          prev.map(item =>
             item.id === id ? { ...item, harga_jual: hargaJual } : item
           )
         );
@@ -121,9 +121,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
         showNotification('Harga jual berhasil diupdate');
       },
       error: (xhr, status, error) => {
-        console.error('Error updating harga jual:', xhr.status, xhr.responseText, error);
         let errorMessage = 'Gagal mengupdate harga jual';
-        
         if (xhr.status === 0) {
           errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
         } else if (xhr.status === 404) {
@@ -133,7 +131,6 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
         } else if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMessage = xhr.responseJSON.message;
         }
-        
         showNotification(errorMessage, 'error');
       },
       complete: () => {
@@ -141,6 +138,7 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       }
     });
   };
+  
 
   const handleCancel = () => {
     setEditingId(null);
@@ -210,10 +208,17 @@ const ListTransaksi: React.FC<ListTransaksiProps> = ({ showNotification }) => {
       {transaksiList.length > 0 && (
         <div className="space-y-3">
           {transaksiList.map((item) => (
-            <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div
+                key={item.id}
+                className={`rounded-lg shadow-sm p-4 border ${
+                  item.harga_jual
+                    ? 'bg-white border-gray-100'
+                    : 'bg-gray-100 border-gray-300 text-gray-500'
+                }`}
+              >              
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{item.nama_hp}</h3>
+                  <h3 className="font-semibold text-gray-800">{item.hp}</h3>
                   <p className="text-sm text-gray-600">Harga Beli: {formatCurrency(item.harga_beli)}</p>
                 </div>
               </div>
