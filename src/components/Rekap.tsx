@@ -419,6 +419,12 @@ const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
                 <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{rekapData.summary.total_ongkir_rupiah}</p>
               </div>
             </div>
+
+            {/* Pengeluaran Tambahan */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pengeluaran Tambahan</p>
+              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{rekapData.summary.pengeluaran_tambahan_rupiah}</p>
+            </div>
             
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Beban</p>
