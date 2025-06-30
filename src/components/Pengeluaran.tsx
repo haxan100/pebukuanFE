@@ -174,8 +174,15 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
     }).format(amount);
   };
 
-  const totalPengeluaranTambahan = pengeluaranData?.pengeluaran_tambahan.reduce((sum, item) => sum + item.nominal, 0) || 0;
-  const totalSemuaPengeluaran = totalPengeluaranTambahan + (pengeluaranData?.total_admin || 0) + (pengeluaranData?.total_ongkir || 0);
+  // Fix calculation by ensuring all values are properly converted to integers
+  const totalPengeluaranTambahan = pengeluaranData?.pengeluaran_tambahan.reduce((sum, item) => {
+    const nominal = typeof item.nominal === 'string' ? parseInt(item.nominal) : item.nominal;
+    return sum + (isNaN(nominal) ? 0 : nominal);
+  }, 0) || 0;
+  
+  const totalAdmin = pengeluaranData?.total_admin || 0;
+  const totalOngkir = pengeluaranData?.total_ongkir || 0;
+  const totalSemuaPengeluaran = totalPengeluaranTambahan + totalAdmin + totalOngkir;
   
   return (
     <div className="space-y-6">
@@ -367,7 +374,9 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
                       <p className="text-sm text-gray-600 dark:text-gray-400">{item.created_at}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(item.nominal)}</p>
+                      <p className="font-semibold text-red-600 dark:text-red-400">
+                        {formatCurrency(typeof item.nominal === 'string' ? parseInt(item.nominal) : item.nominal)}
+                      </p>
                     </div>
                   </div>
                 </div>
