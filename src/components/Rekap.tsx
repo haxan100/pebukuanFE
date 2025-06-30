@@ -407,6 +407,19 @@ const Rekap: React.FC<RekapProps> = ({ showNotification }) => {
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Penjualan</p>
               <p className="text-xl font-bold text-gray-800 dark:text-white">{rekapData.summary.total_penjualan_rupiah}</p>
             </div>
+            
+            {/* Admin and Ongkir Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-purple-500">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Admin</p>
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{rekapData.summary.total_admin_rupiah}</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-indigo-500">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Ongkir</p>
+                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{rekapData.summary.total_ongkir_rupiah}</p>
+              </div>
+            </div>
+            
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Beban</p>
               <p className="text-xl font-bold text-gray-800 dark:text-white">{rekapData.summary.total_beban_rupiah}</p>

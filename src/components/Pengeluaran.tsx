@@ -9,6 +9,14 @@ interface PengeluaranItem {
   created_at: string;
 }
 
+interface PengeluaranData {
+  pengeluaran_tambahan: PengeluaranItem[];
+  total_admin: number;
+  total_ongkir: number;
+  total_admin_rupiah: string;
+  total_ongkir_rupiah: string;
+}
+
 interface PengeluaranProps {
   showNotification: (message: string, type?: 'success' | 'error') => void;
 }
@@ -16,7 +24,7 @@ interface PengeluaranProps {
 const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
-  const [pengeluaranList, setPengeluaranList] = useState<PengeluaranItem[]>([]);
+  const [pengeluaranData, setPengeluaranData] = useState<PengeluaranData | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -64,7 +72,7 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
         withCredentials: false
       },
       success: (response) => {
-        setPengeluaranList(response.data || []);
+        setPengeluaranData(response.data);
         showNotification('Data pengeluaran berhasil dimuat');
       },
       error: (xhr, status, error) => {
@@ -166,7 +174,8 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
     }).format(amount);
   };
 
-  const totalPengeluaran = pengeluaranList.reduce((sum, item) => sum + item.nominal, 0);
+  const totalPengeluaranTambahan = pengeluaranData?.pengeluaran_tambahan.reduce((sum, item) => sum + item.nominal, 0) || 0;
+  const totalSemuaPengeluaran = totalPengeluaranTambahan + (pengeluaranData?.total_admin || 0) + (pengeluaranData?.total_ongkir || 0);
   
   return (
     <div className="space-y-6">
@@ -316,32 +325,61 @@ const Pengeluaran: React.FC<PengeluaranProps> = ({ showNotification }) => {
         </div>
       )}
 
-      {pengeluaranList.length > 0 && (
-        <div className="space-y-3">
-          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-800 dark:text-blue-300">Total Pengeluaran</h3>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(totalPengeluaran)}</p>
-          </div>
-          
-          {pengeluaranList.map((item) => (
-            <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 dark:text-white">{item.keterangan}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{item.created_at}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(item.nominal)}</p>
-                </div>
+      {pengeluaranData && (
+        <div className="space-y-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Admin and Ongkir Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-purple-500">
+                <h3 className="font-semibold text-purple-800 dark:text-purple-300 text-sm">Total Admin</h3>
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{pengeluaranData.total_admin_rupiah}</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-indigo-500">
+                <h3 className="font-semibold text-indigo-800 dark:text-indigo-300 text-sm">Total Ongkir</h3>
+                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{pengeluaranData.total_ongkir_rupiah}</p>
               </div>
             </div>
-          ))}
+
+            {/* Pengeluaran Tambahan */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
+              <h3 className="font-semibold text-orange-800 dark:text-orange-300">Pengeluaran Tambahan</h3>
+              <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(totalPengeluaranTambahan)}</p>
+            </div>
+
+            {/* Total Semua Pengeluaran */}
+            <div className="bg-gradient-to-r from-red-500 to-pink-600 rounded-lg shadow-sm p-4 text-white">
+              <h3 className="font-semibold text-lg">Total Semua Pengeluaran</h3>
+              <p className="text-2xl font-bold">{formatCurrency(totalSemuaPengeluaran)}</p>
+              <p className="text-sm opacity-90 mt-1">Admin + Ongkir + Pengeluaran Tambahan</p>
+            </div>
+          </div>
+
+          {/* Pengeluaran Tambahan List */}
+          {pengeluaranData.pengeluaran_tambahan.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Detail Pengeluaran Tambahan</h3>
+              {pengeluaranData.pengeluaran_tambahan.map((item) => (
+                <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 dark:text-white">{item.keterangan}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.created_at}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(item.nominal)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {pengeluaranList.length === 0 && !loading && (
+      {!pengeluaranData && !loading && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">Tidak ada data pengeluaran untuk periode yang dipilih</p>
+          <p className="text-gray-500 dark:text-gray-400">Pilih periode untuk melihat data pengeluaran</p>
         </div>
       )}
     </div>
