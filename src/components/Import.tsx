@@ -74,7 +74,7 @@ const Import: React.FC<ImportProps> = ({ showNotification, setActiveTab }) => {
     setUploading(true);
     
     $.ajax({
-      url: 'http://31.25.235.140/pembukuan/Api/import',
+      url: 'http://31.25.235.140/pembukuan/Api/import_pdf',
       method: 'POST',
       data: formData,
       processData: false,
